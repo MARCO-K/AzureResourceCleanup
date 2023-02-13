@@ -4,25 +4,26 @@ $tenant = '775fb56c-2847-4743-b9ff-51ffa2be3a64'
 
 # Get the context
 $context = Get-AzContext
-if ($context.Tenant.Id -ne $tenant) {
-# Get the connection
-try
+if ($context.Tenant.Id -ne $tenant) 
 {
-  $Connection = Connect-AzAccount -TenantId $tenant
-}
-catch 
-{
-  if (!$Connection)
+  # Get the connection
+  try
   {
-    $ErrorMessage = '... Connection not found.'
-    throw $ErrorMessage
+    $Connection = Connect-AzAccount -TenantId $tenant
   }
-  else
+  catch 
   {
-    Write-Error -Message $_.Exception
-    throw $_.Exception
+    if (!$Connection)
+    {
+      $ErrorMessage = '... Connection not found.'
+      throw $ErrorMessage
+    }
+    else
+    {
+      Write-Error -Message $_.Exception
+      throw $_.Exception
+    }
   }
-}
 }
 $Connection
 
@@ -31,7 +32,7 @@ $VMs = Get-AzVM
 
 if (!$VMs)
 {
-  Write-Host -Object 'No valid Azure virtual machine to delete'
+  Write-Verbose -Message 'No valid Azure virtual machine to delete'
   break
 }
     
