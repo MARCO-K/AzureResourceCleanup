@@ -1,8 +1,10 @@
 ﻿#Requires -Module @{ ModuleName = 'Az.Resources'; ModuleVersion = '6.4.0'}, @{ ModuleName = 'Az.Accounts'; ModuleVersion = '2.10.3'}
 
 $tenant = '775fb56c-2847-4743-b9ff-51ffa2be3a64'
-$expireOn = '2022-10-31'
+$expireOn = '2023-01-31'
 
+$context = Get-AzContext
+if ($context.Tenant.Id -ne $tenant) {
 # Get the connection
 try
 {
@@ -20,6 +22,7 @@ catch
     Write-Error -Message $_.Exception
     throw $_.Exception
   }
+}
 }
 $Connection
 
