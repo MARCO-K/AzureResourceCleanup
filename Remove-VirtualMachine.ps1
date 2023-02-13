@@ -2,6 +2,9 @@
 
 $tenant = '775fb56c-2847-4743-b9ff-51ffa2be3a64'
 
+# Get the context
+$context = Get-AzContext
+if ($context.Tenant.Id -ne $tenant) {
 # Get the connection
 try
 {
@@ -19,6 +22,7 @@ catch
     Write-Error -Message $_.Exception
     throw $_.Exception
   }
+}
 }
 $Connection
 
