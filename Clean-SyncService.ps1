@@ -1,30 +1,35 @@
 ﻿#Requires -Module @{ ModuleName = 'Az.StorageSync'; ModuleVersion = '1.7.0'}, @{ ModuleName = 'Az.Resources'; ModuleVersion = '6.4.0'}, @{ ModuleName = 'Az.Accounts'; ModuleVersion = '2.10.3'}
 
-$tennant = '775fb56c-2847-4743-b9ff-51ffa2be3a64'
+$tenant = '775fb56c-2847-4743-b9ff-51ffa2be3a64'
 
-# Get the connection
-try
+# Get the context
+$context = Get-AzContext
+if ($context.Tenant.Id -ne $tenant) 
 {
-  $Connection = Connect-AzAccount -TenantId $tennant
-}
-catch 
-{
-  if (!$Connection)
+  # Get the connection
+  try
   {
-    $ErrorMessage = '... Connection not found.'
-    throw $ErrorMessage
+    $Connection = Connect-AzAccount -TenantId $tenant
   }
-  else
+  catch 
   {
-    Write-Error -Message $_.Exception
-    throw $_.Exception
+    if (!$Connection)
+    {
+      $ErrorMessage = '... Connection not found.'
+      throw $ErrorMessage
+    }
+    else
+    {
+      Write-Error -Message $_.Exception
+      throw $_.Exception
+    }
   }
 }
 $Connection
 
 ##Azure part
 # Collect basic infos
-$syncService = Get-AzStorageSyncService
+$syncService = Get-AzStorageSyncService 
 $synGroup = Get-AzStorageSyncGroup -ResourceGroupName $syncService.ResourceGroupName -StorageSyncServiceName $syncService.StorageSyncServiceName
 
 # Lists all registered server within a given sync group
