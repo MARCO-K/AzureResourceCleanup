@@ -28,30 +28,40 @@ if ($context.Tenant.Id -ne $tenant)
 $Connection
 
 # Check and Register the resource provider if it's not already registered
-$AzProvider = Get-AzResourceProvider | Where-Object { $_.ProviderNamespace -eq 'Microsoft.PolicyInsights' }
-if ($AzProvider.RegistrationState -ne 'Registered') { 
-Register-AzResourceProvider -ProviderNamespace 'Microsoft.PolicyInsights'}
+$AzProvider = Get-AzResourceProvider | Where-Object -FilterScript {
+  $_.ProviderNamespace -eq 'Microsoft.PolicyInsights' 
+}
+if ($AzProvider.RegistrationState -ne 'Registered') 
+{
+  Register-AzResourceProvider -ProviderNamespace 'Microsoft.PolicyInsights'
+}
 
 # Get the custom policy assignment
-$PolicyAss = Get-AzPolicyAssignment | Where-Object { $_.ResourceName -ne 'SecurityCenterBuiltIn'}
+$PolicyAss = Get-AzPolicyAssignment | Where-Object -FilterScript {
+  $_.ResourceName -ne 'SecurityCenterBuiltIn'
+}
 # Removes the policy assignment
 $PolicyAss | Remove-AzPolicyAssignment
 
 # Get a reference to the custom policy initiatives
 $policies = Get-AzPolicySetDefinition  -Custom
 # Removes the custom policies
-if($policies) { 
+if($policies) 
+{
   $policies | Remove-AzPolicySetDefinition -Confirm:$false
 }
 
 # Get a reference to the custom policy definition
-$policies = Get-AzPolicyDefinition | Where-Object {$_.Properties.PolicyType -eq 'Custom'}
+$policies = Get-AzPolicyDefinition | Where-Object -FilterScript {
+  $_.Properties.PolicyType -eq 'Custom'
+}
 
 # Removes the custom policies
-if($policies) { 
+if($policies) 
+{
   $policies | Remove-AzPolicyDefinition -Confirm:$false
 }
 
 
-
+Disconnect-AzAccount
 
