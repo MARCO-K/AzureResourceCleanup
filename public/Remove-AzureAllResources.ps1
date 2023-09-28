@@ -39,19 +39,15 @@
   )
 
   begin {
-    if ($checkexpireOn) 
-    {
-      $resourceGraphQuery = 'Resources | where todatetime(tags.expireOn) < now() | project id'
-    }
-    else 
-    {
-      $resourceGraphQuery = 'Resources | project id'
+    $resourceGraphQuery = if ($CheckExpireOn) {
+        'Resources | where todatetime(tags.expireOn) < now() | project id'
+    } else {
+        'Resources | project id'
     }
 
     #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
     class AzResourceGraphException : Exception {
       [string] $additionalData
-
       AzResourceGraphException($Message, $additionalData) : base($Message) 
       {
         $this.additionalData = $additionalData
@@ -84,8 +80,6 @@
     }
     Write-Verbose -Message $Connection
   
-
-
     <#
         Helper function to resolve resourceIds
         $resourceID = '/subscriptions/00/resourcegroups/rg-test/providers/microsoft.compute/virtualmachines/vm-test'
@@ -170,6 +164,7 @@
 
       $RGs = Get-AzResourceGroup
       
+      $result +=
       foreach($RG in $RGs)
       {
         $RGname = $RG.ResourceGroupName
