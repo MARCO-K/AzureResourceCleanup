@@ -4,13 +4,17 @@
       .Synopsis
       The cmdlet removes all Azure resources.
       .Description
-      The cmdlet removes all Azure resources. I't can exclude various resource types and check the expiredOn tag.
+      The cmdlet removes all Azure resources. It can exclude various resource types and check the expiredOn tag.
       .PARAMETER TenantID
       This parameter is the actual tenant id.
+      .PARAMETER SubscritionID
+      This parameter is the actual subscription id.
       .PARAMETER Exclude
-      This parameter is the actual tenant id.
+      This parameter can be used to exclude several resource types. Possible exclusions are: 'Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage'.
+      .Parameter checkexpireOn
+      This parameter can be used to check the ExpireOn tag.
       .Example
-      PS C:\> Remove-AzurePolicy $tenant = ''
+      Remove-AzurePolicy TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
 
   #>
 
@@ -29,7 +33,7 @@
           {
             throw "$_ is invalid."
           }
-    })][string]$subscritionID,
+    })][string]$SubscritionID,
     [Validateset('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage')][string[]]$Exclude,
     [switch]$checkexpireOn
   )
@@ -56,9 +60,9 @@
 
     try
     {
-      if ($subscritionID) 
+      if ($S) 
       {
-        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $S
       }
       else 
       {
@@ -112,9 +116,9 @@
 
     try 
     {
-      if ($subscritionID) 
+      if ($S) 
       {
-        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
+        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $S
       }
       else 
       {
