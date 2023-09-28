@@ -15,7 +15,6 @@
       This parameter can be used to check the ExpireOn tag.
       .Example
       Remove-AzurePolicy TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
-
   #>
 
   [cmdletbinding()]
@@ -33,12 +32,13 @@
           {
             throw "$_ is invalid."
           }
-    })][string]$SubscritionID,
+    })][string]$subscritionID,
     [Validateset('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage')][string[]]$Exclude,
     [switch]$checkexpireOn
   )
 
   begin {
+    #check if expireOn tag should be used
     $resourceGraphQuery = if ($CheckExpireOn) {
         'Resources | where todatetime(tags.expireOn) < now() | project id'
     } else {
@@ -54,11 +54,12 @@
       }
     }
 
+    #connect to AZ account
     try
     {
-      if ($SubscritionID) 
+      if ($subscritionID) 
       {
-        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $SubscritionID
+        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
       }
       else 
       {
@@ -103,16 +104,11 @@
   process {
 
     ## Collect all expired resources
-    #Limit search to one subscription by changing the PowerShell profile
-    $PSDefaultParameterValues = @{
-      'Search-AzGraph:Subscription' = $(Get-AzSubscription).ID
-    }
-
     try 
     {
-      if ($SubscritionID) 
+      if ($subscritionID) 
       {
-        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $SubscritionID
+        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
       }
       else 
       {
@@ -163,7 +159,7 @@
       }
 
       $RGs = Get-AzResourceGroup
-      
+ 
       $result +=
       foreach($RG in $RGs)
       {
@@ -182,6 +178,6 @@
   }
   end {
     $result
-    Disconnect-AzAccount
+    $null = Disconnect-AzAccount
   }
 }
