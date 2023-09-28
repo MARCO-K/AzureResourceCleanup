@@ -38,32 +38,14 @@
   )
 
   begin {
-    #check if expireOn tag should be used
-    $resourceGraphQuery = if ($CheckExpireOn) {
-        'Resources | where todatetime(tags.expireOn) < now() | project id'
-    } else {
-        'Resources | project id'
-    }
-
-    #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
-    class AzResourceGraphException : Exception {
-      [string] $additionalData
-      AzResourceGraphException($Message, $additionalData) : base($Message) 
-      {
-        $this.additionalData = $additionalData
-      }
-    }
-
     #connect to AZ account
     try
     {
-      if ($subscritionID) 
-      {
-        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+      $Connection = if ($subscritionID) {
+        Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
       }
-      else 
-      {
-        $Connection = Connect-AzAccount -TenantId $TenantID
+      else  {
+        Connect-AzAccount -TenantId $TenantID
       }
     }
     catch 
@@ -80,39 +62,39 @@
       }
     }
     Write-Verbose -Message $Connection
-  
-    <#
-        Helper function to resolve resourceIds
-        $resourceID = '/subscriptions/00/resourcegroups/rg-test/providers/microsoft.compute/virtualmachines/vm-test'
-    #>
-    function Select-GroupAndName
-    {
-      param (
-        [Parameter(Mandatory)][string]$resourceID
-      )
-      $array = $resourceID.Split('/') 
-      $index = 0..($array.Length -1) | Where-Object -FilterScript {
-        $array[$_] -notin $Exclude
-      }
-      if($index -gt 0) 
+    
+        #check if expireOn tag should be used
+    $resourceGraphQuery = if ($CheckExpireOn) {
+      'Resources | where todatetime(tags.expireOn) < now()'
+    } else {
+      'Resources'
+    }
+    
+    # Get all locked resources
+    $lockedResources = Get-AzResourceLock | Select-Object -ExpandProperty ResourceName
+    
+    #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
+    class AzResourceGraphException : Exception {
+      [string] $additionalData
+      AzResourceGraphException($Message, $additionalData) : base($Message) 
       {
-        $resourceID
+        $this.additionalData = $additionalData
       }
     }
   }
-
+  
   process {
 
     ## Collect all expired resources
     try 
     {
-      if ($subscritionID) 
+      $expResources =  if ($subscritionID) 
       {
-        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
+        Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
       }
       else 
       {
-        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue
+        Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue
       }
 
       if ($null -ne $grapherror.Length) 
@@ -134,18 +116,20 @@
       Write-Verbose -Message $_.Exception.message
     }
 
-    # exclude resources with special handling ;-)
-    $expResources = 
-    foreach($res in $expResources) 
-    {
-      Select-GroupAndName -resourceID $res.ResourceId
+
+
+    #exclude locked and excluded resources
+    $resources = 
+    foreach($res in $expResources) {
+        if ((($res.type).split('/')[0] -inotin $Exclude ) -and ($res.Name -inotin $lockedResources) ) 
+        { $res }
     }
+    
 
-
-    if($expResources.Count -gt 0) 
+    if($resources.Count -gt 0) 
     { 
       $result = 
-      foreach ($res in $expResources) 
+      foreach ($res in $resources.id) 
       {
         # Remove every single resource
         try 
