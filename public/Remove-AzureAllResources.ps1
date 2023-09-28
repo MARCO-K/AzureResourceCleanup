@@ -18,12 +18,31 @@
   Param(
     [Parameter(Mandatory)]
     [string]$TenantID,
-    [Validateset('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage')][string[]]$Exclude
+    [ValidateScript({
+          $Subscriptions = ((Get-AzContext).Account | Select-Object -ExpandProperty ExtendedProperties).Subscriptions
+          $Subscriptions = $Subscriptions.Split(',')
+          if ($_ -in $Subscriptions) 
+          {
+            $true 
+          }
+          else 
+          {
+            throw "$_ is invalid."
+          }
+    })][string]$subscritionID,
+    [Validateset('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage')][string[]]$Exclude,
+    [switch]$checkexpireOn
   )
 
   begin {
-
-    $resourceGraphQuery = 'Resources | where todatetime(tags.expireOn) < now() | project id'
+    if ($checkexpireOn) 
+    {
+      $resourceGraphQuery = 'Resources | where todatetime(tags.expireOn) < now() | project id'
+    }
+    else 
+    {
+      $resourceGraphQuery = 'Resources | project id'
+    }
 
     #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
     class AzResourceGraphException : Exception {
@@ -37,7 +56,14 @@
 
     try
     {
-      $Connection = Connect-AzAccount -TenantId $TenantID
+      if ($subscritionID) 
+      {
+        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+      }
+      else 
+      {
+        $Connection = Connect-AzAccount -TenantId $TenantID
+      }
     }
     catch 
     {
@@ -86,7 +112,14 @@
 
     try 
     {
-      $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue 
+      if ($subscritionID) 
+      {
+        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
+      }
+      else 
+      {
+        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue
+      }
 
       if ($null -ne $grapherror.Length) 
       {
