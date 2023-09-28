@@ -60,9 +60,9 @@
 
     try
     {
-      if ($S) 
+      if ($SubscritionID) 
       {
-        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $S
+        $Connection = Connect-AzAccount -TenantId $TenantID -Subscription $SubscritionID
       }
       else 
       {
@@ -116,9 +116,9 @@
 
     try 
     {
-      if ($S) 
+      if ($SubscritionID) 
       {
-        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $S
+        $expResources = Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $SubscritionID
       }
       else 
       {
@@ -169,7 +169,7 @@
       }
 
       $RGs = Get-AzResourceGroup
- 
+      
       foreach($RG in $RGs)
       {
         $RGname = $RG.ResourceGroupName
