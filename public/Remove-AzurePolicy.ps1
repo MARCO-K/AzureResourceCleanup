@@ -7,8 +7,10 @@ Function Remove-AzurePolicy
       The cmdlet removes Azure custom policies incl. all assignments and definitions.
       .PARAMETER TenantID
       This parameter is the actual tenant id.
+      .PARAMETER SubscritionID
+      This parameter is the actual subscription id.
       .Example
-      PS C:\> Remove-AzurePolicy $tenant = ''
+      Remove-AzurePolicy $tenantId = ''
 
   #>
 
@@ -16,12 +18,31 @@ Function Remove-AzurePolicy
   [cmdletbinding()]
   Param(
     [Parameter(Mandatory)]
-    [string]$TenantID
+    [string]$TenantID,
+    [ValidateScript({
+      $Subscriptions = ((Get-AzContext).Account | Select-Object -ExpandProperty ExtendedProperties).Subscriptions
+      $Subscriptions = $Subscriptions.Split(',')
+      if ($_ -in $Subscriptions) 
+      {
+        $true 
+      }
+      else 
+      {
+        throw "$_ is invalid."
+      }
+    })][string]$subscritionID
   )
+
   begin {
+    #connect to AZ account
     try
     {
-      $Connection = Connect-AzAccount -TenantId $TenantID
+      $Connection = if ($subscritionID) {
+        Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+      }
+      else  {
+        Connect-AzAccount -TenantId $TenantID
+      }
     }
     catch 
     {
@@ -73,9 +94,12 @@ Function Remove-AzurePolicy
     # Removes the custom policies
     if($policies) 
     {
-      $policies | Remove-AzPolicyDefinition -Confirm:$false
+      $policies | Remove-AzPolicyDefinition -Confirm:$false -Force
     }
   }
     
-  end { Disconnect-AzAccount }
+  end {
+    ##Clear-AzContext -Scope Process -Force -ErrorAction SilentlyContinue
+    $null = Disconnect-AzAccount -TenantId $TenantID -ErrorAction SilentlyContinue
+  }
 }
