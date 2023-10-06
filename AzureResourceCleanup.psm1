@@ -33,13 +33,13 @@ function Import-ModuleFile
 #endregion Helper function
 
 # Perform Actions before loading the rest of the content
-. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\preimport.ps1"
+#. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\preimport.ps1"
 
 #region Load functions
-foreach ($function in (Get-ChildItem "$ModuleRoot\internal\functions" -Recurse -File -Filter "*.ps1"))
-{
-	. Import-ModuleFile -Path $function.FullName
-}
+#foreach ($function in (Get-ChildItem "$ModuleRoot\internal\functions" -Recurse -File -Filter "*.ps1"))
+#{
+#	. Import-ModuleFile -Path $function.FullName
+#}
 
 foreach ($function in (Get-ChildItem "$ModuleRoot\functions" -Recurse -File -Filter "*.ps1"))
 {
@@ -48,4 +48,4 @@ foreach ($function in (Get-ChildItem "$ModuleRoot\functions" -Recurse -File -Fil
 #endregion Load functions
 
 # Perform Actions after loading the module contents
-. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\postimport.ps1"
+#. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\postimport.ps1"

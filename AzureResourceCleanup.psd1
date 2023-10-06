@@ -38,9 +38,10 @@
 	
 	# Modules that must be imported into the global environment prior to importing this module
 	RequiredModules = @(
-		ModuleName='PSFramework'; ModuleVersion='1.9.310'
-		ModuleName='Az.Accounts'; ModuleVersion='2.13.0'
-		ModuleName = 'Az.RecoveryServices'; ModuleVersion = '6.5.1'
+		@{ ModuleName = 'PSFramework'; ModuleVersion = '1.9.270' }
+		@{ ModuleName = 'string'; ModuleVersion = '1.1.3' }
+		@{ ModuleName='Az.Accounts'; ModuleVersion='2.13.0'}
+		@{ ModuleName = 'Az.RecoveryServices'; ModuleVersion = '6.5.1'}
 		)
 
 	
@@ -60,7 +61,7 @@
 	NestedModules = @()
 	
 	# Functions to export from this module
-	FunctionsToExport = ''
+	FunctionsToExport = '*'
 	
 	# Cmdlets to export from this module
 	CmdletsToExport = ''
