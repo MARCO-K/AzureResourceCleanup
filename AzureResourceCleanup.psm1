@@ -1,23 +1,51 @@
-#Get public and private function definition files.
-    $Public  = @( Get-ChildItem -Path $PSScriptRoot\function\*.ps1 -ErrorAction SilentlyContinue )
-    $Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
+$script:ModuleRoot = $PSScriptRoot
 
-#Dot source the files
-    Foreach($import in @($Public + $Private))
-    {
-        Try
-        {
-            . $import.fullname
-        }
-        Catch
-        {
-            Write-Error -Message "Failed to import function $($import.fullname): $_"
-        }
-    }
+#region Helper function
+function Import-ModuleFile
+{
+	<#
+		.SYNOPSIS
+			Loads files into the module on module import.
+		
+		.DESCRIPTION
+			This helper function is used during module initialization.
+			It should always be dotsourced itself, in order to proper function.
+			
+			This provides a central location to react to files being imported, if later desired
+		
+		.PARAMETER Path
+			The path to the file to load
+		
+		.EXAMPLE
+			PS C:\> . Import-ModuleFile -File $function.FullName
+	
+			Imports the file stored in $function according to import policy
+	#>
+	[CmdletBinding()]
+	Param (
+		[string]
+		$Path
+	)
+	
+	if ($script:dontDotSource) { $ExecutionContext.InvokeCommand.InvokeScript($false, ([scriptblock]::Create([io.file]::ReadAllText((Resolve-Path $Path).ProviderPath))), $null, $null) }
+	else { . (Resolve-Path $Path).ProviderPath }
+}
+#endregion Helper function
 
-# Here I might...
-    # Read in or create an initial config file and variable
-    # Export Public functions ($Public.BaseName) for WIP modules
-    # Set variables visible to the module and its functions only
+# Perform Actions before loading the rest of the content
+. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\preimport.ps1"
 
-Export-ModuleMember -Function $Public.Basename
+#region Load functions
+foreach ($function in (Get-ChildItem "$ModuleRoot\internal\functions" -Recurse -File -Filter "*.ps1"))
+{
+	. Import-ModuleFile -Path $function.FullName
+}
+
+foreach ($function in (Get-ChildItem "$ModuleRoot\functions" -Recurse -File -Filter "*.ps1"))
+{
+	. Import-ModuleFile -Path $function.FullName
+}
+#endregion Load functions
+
+# Perform Actions after loading the module contents
+. Import-ModuleFile -Path "$ModuleRoot\internal\scripts\postimport.ps1"
