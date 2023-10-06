@@ -50,7 +50,7 @@ Function Remove-AzureRecoveryService
     else 
     {
       $context = Get-AzContext
-      Write-PSFMessage -Level Verbose -Message "All vault in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
+      Write-PSFMessage -Level Verbose -Message "All vaults in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
     }
   }
 
@@ -65,6 +65,13 @@ Function Remove-AzureRecoveryService
 
       ## set context by selecting the container
       $container = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $ContainerType
+      if ($null -eq $container) 
+      {
+        $ErrorMessage = 'No container found.'
+        throw $ErrorMessage
+      }
+      Write-PSFMessage -Level Verbose -Message "Container $($container.FriendlyName) selected" -ModuleName 'AzureResourceCleanup'  
+
 
       ## Disable soft delete for the Azure Backup Recovery Services vault
       $vaultProp = Get-AzRecoveryServicesVaultProperty -VaultId $vault.ID
@@ -93,10 +100,10 @@ Function Remove-AzureRecoveryService
           try 
           {
             Undo-AzRecoveryServicesBackupItemDeletion -Item $BackupItem -VaultId $vault.ID -Force 
-            Write-PSFMessage -Level Verbose -Message "Soft-deleted state for $($BackupItem.Name) in vault $($vault.Name) reversed" -ModuleName 'AzureResourceCleanup'
+            Write-PSFMessage -Level Verbose -Message "Soft-deleted state for $($BackupItem.WorkloadName) in vault $($vault.Name) reversed" -ModuleName 'AzureResourceCleanup'
           } catch 
           {
-            Write-PSFMessage -Level Warning -Message "Failed to reverse soft-deleted state for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+            Write-PSFMessage -Level Warning -Message "Failed to reverse soft-deleted state for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
           }
         }
       }
@@ -112,11 +119,11 @@ Function Remove-AzureRecoveryService
         {  
           try 
           {
-            Disable-AzRecoveryServicesBackupProtection -Item $BackupItem -Force -RemoveRecoveryPoints -VaultId $vault.ID 
-            Write-PSFMessage -Level Verbose -Message "Disabled backup for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+            $null = Disable-AzRecoveryServicesBackupProtection -Item $BackupItem -Force -RemoveRecoveryPoints -VaultId $vault.ID 
+            Write-PSFMessage -Level Verbose -Message "Disabled backup for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
           } catch 
           {
-            Write-PSFMessage -Level Warning -Message "Failed to disable backup for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+            Write-PSFMessage -Level Warning -Message "Failed to disable backup for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
           }
         }
       }
@@ -128,7 +135,7 @@ Function Remove-AzureRecoveryService
       if ($BackupItems.Count -eq 0) 
       {
         Write-PSFMessage -Level Verbose -Message "The vault $($vault.Name) is empty and will be deleted" -ModuleName 'AzureResourceCleanup'
-        Remove-AzRecoveryServicesVault -Vault $vault -Confirm:$false
+        $null = Remove-AzRecoveryServicesVault -Vault $vault -Confirm:$false
         Write-PSFMessage -Level Verbose -Message "The vault $($vault.Name) has been deleted" -ModuleName 'AzureResourceCleanup'
       }
       else 
@@ -145,6 +152,12 @@ Function Remove-AzureRecoveryService
       {
         ## set context by selecting the container
         $container = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $ContainerType
+        if ($null -eq $container) 
+        {
+          $ErrorMessage = 'No container found.'
+          throw $ErrorMessage
+        }
+        Write-PSFMessage -Level Verbose -Message "Container $($container.FriendlyName) selected" -ModuleName 'AzureResourceCleanup'  
         
         ## Disable soft delete for the Azure Backup Recovery Services vault
         $vaultProp = Get-AzRecoveryServicesVaultProperty -VaultId $vault.ID
@@ -173,10 +186,10 @@ Function Remove-AzureRecoveryService
             try 
             {
               Undo-AzRecoveryServicesBackupItemDeletion -Item $BackupItem -VaultId $vault.ID -Force 
-              Write-PSFMessage -Level Verbose -Message "Soft-deleted state for $($BackupItem.Name) in vault $($vault.Name) reversed" -ModuleName 'AzureResourceCleanup'
+              Write-PSFMessage -Level Verbose -Message "Soft-deleted state for $($BackupItem.WorkloadName) in vault $($vault.Name) reversed" -ModuleName 'AzureResourceCleanup'
             } catch 
             {
-              Write-PSFMessage -Level Warning -Message "Failed to reverse soft-deleted state for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+              Write-PSFMessage -Level Warning -Message "Failed to reverse soft-deleted state for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
             }
           }
         }
@@ -193,10 +206,10 @@ Function Remove-AzureRecoveryService
             try 
             {
               Disable-AzRecoveryServicesBackupProtection -Item $BackupItem -Force -RemoveRecoveryPoints -VaultId $vault.ID 
-              Write-PSFMessage -Level Verbose -Message "Disabled backup for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+              Write-PSFMessage -Level Verbose -Message "Disabled backup for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
             } catch 
             {
-              Write-PSFMessage -Level Warning -Message "Failed to disable backup for $($BackupItem.Name) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
+              Write-PSFMessage -Level Warning -Message "Failed to disable backup for $($BackupItem.WorkloadName) in vault $($vault.Name)" -ModuleName 'AzureResourceCleanup'
             }
           }
         }
@@ -207,7 +220,7 @@ Function Remove-AzureRecoveryService
         if ($BackupItems.Count -eq 0) 
         {
           Write-PSFMessage -Level Verbose -Message "The vault $($vault.Name) is empty and will be deleted" -ModuleName 'AzureResourceCleanup'
-          Remove-AzRecoveryServicesVault -Vault $vault -Confirm:$false
+          $null = Remove-AzRecoveryServicesVault -Vault $vault -Confirm:$false
           Write-PSFMessage -Level Verbose -Message "The vault $($vault.Name) has been deleted" -ModuleName 'AzureResourceCleanup'
         }
         else 
@@ -227,6 +240,6 @@ Function Remove-AzureRecoveryService
   }  
   end {
     Write-PSFMessage -Level Verbose -Message "All vaults in context $($context.Name) has been deleted" -ModuleName 'AzureResourceCleanup'
-    Disconnect-AzAccount -Scope Process
+    $null = Disconnect-AzAccount -Scope Process
   }
 } 
