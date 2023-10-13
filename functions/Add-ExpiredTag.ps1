@@ -1,14 +1,21 @@
 ﻿Function Add-AzureExpiredTag
 {
   <#
-      .Synopsis
-      The cmdlet adds an expiredOn tag to all ressources.
-      .Description
-      The cmdlet removes Azure custom policies incl. all assignments and definitions.
-      .PARAMETER TenantID
-      This parameter is the actual tenant id.
-      .Example
-      PS C:\> Remove-AzurePolicy $tenant = ''
+    .Synopsis
+    The cmdlet adds an expiredOn tag to all ressources.
+    
+    .Description
+    The cmdlet adds an expiredOn tag to all ressourcesand resource groups. 
+    The tag is set to the date specified in the parameter expireOn.
+    
+    .PARAMETER TenantID
+    This parameter is the actual tenant id.
+    
+    .PARAMETER expireOn
+    This parameter is the date when the ressources will be deleted.
+
+    .Example
+     Add-AzureExpiredTag $tenant = ''
 
   #>
 
@@ -23,45 +30,45 @@
   )
 
   begin {
-    $context = Get-AzContext
-    if ($context.Tenant.Id -ne $TenantID) 
+    # check for existing connection to Azure
+    $context = Get-AzContext -ListAvailable
+    
+    ## if no connection exists then try to connect
+    if ($context.count -eq 0) 
     {
-      # Get the connection
-
       try
       {
-        $Connection = Connect-AzAccount -TenantId $TenantID
+        $Connection = Connect-AzAccount -TenantId $TenantId
       }
       catch 
       {
         if (!$Connection)
         {
-          $ErrorMessage = '... Connection not found.'
-          throw $ErrorMessage
+          Write-PSFMessage -Level Error -Message '... Connection not found.' -ModuleName 'AzureResourceCleanup'
+          throw
         }
         else
         {
-          Write-Error -Message $_.Exception
-          throw $_.Exception
+          Write-PSFMessage -Level Error -Message $_.Exception -ModuleName 'AzureResourceCleanup'
+          throw
         }
       }
-      Write-Verbose -Message $Connection
+      Write-PSFMessage -Level Verbose -Message $Connection -ModuleName 'AzureResourceCleanup'
     }
-    $date = ([datetime]::ParseExact($expireOn,'MM/dd/yyyy',$null))
-    
-  }
-  Process {
+    else 
+    {
+      $context = Get-AzContext
+      Write-PSFMessage -Level Verbose -Message "All vaults in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
+    }
+
     # Get all RG names
     $RGs = (Get-AzResourceGroup).ResourceGroupName
 
-    $result = 
+  }
+
+  Process {
     foreach($RG in $RGs) 
     {
-      # Set Tag for RG
-      Set-AzResourceGroup -ResourceId (Get-AzResourceGroup -Name $RG).ResourceId -Tag @{
-        expireOn = $date
-      }
-
       $group = Get-AzResourceGroup -Name $RG
     
       # Get all resources in RG and add TAG
@@ -79,18 +86,26 @@
               $tags.Add($key, $group.Tags.$key)
             }
           }
+          Write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
           Set-AzResource -Tag $tags -ResourceId $r.ResourceId -Force
         }
         else
         {
+          write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
           Set-AzResource -Tag $group.Tags -ResourceId $r.ResourceId -Force
         }
+      }
+
+      # Set Tag for RG
+      write-PSFMessage -Level Verbose -Message "Tagging $($group.ResourceGroupName) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
+      Set-AzResourceGroup -ResourceId (Get-AzResourceGroup -Name $RG).ResourceId -Tag @{
+        expireOn = $date
       }
     }
   }
 
   end {
-    $result
-    Disconnect-AzAccount
+    Write-PSFMessage -Level Verbose -Message "All resource groups and  in context $($context.Name) has have been tagged" -ModuleName 'AzureResourceCleanup'
+    $null = Disconnect-AzAccount -Scope Process
   }
 }
