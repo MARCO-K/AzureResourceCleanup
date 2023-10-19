@@ -25,13 +25,14 @@
     [string]$TenantID,
     [parameter(Mandatory,Helpmessage = 'Input format: yyyy-mm-dd')][ValidateScript(`
         {
-          ([datetime]::ParseExact($_,'yyyy-mm-dd',[cultureinfo]::CreateSpecificCulture('en-US')) -le (Get-Date)) 
+          ([datetime]::ParseExact($_,'yyyy/mm/dd',[cultureinfo]::CreateSpecificCulture('en-US')) -le (Get-Date)) 
     })]$expireOn
   )
 
   begin {
     # check for existing connection to Azure
     $context = Get-AzContext -ListAvailable
+    $tag = @{ 'expireOn' = $expireOn }
     
     ## if no connection exists then try to connect
     if ($context.count -eq 0) 
@@ -62,44 +63,41 @@
     }
 
     # Get all RG names
-    $RGs = (Get-AzResourceGroup).ResourceGroupName
+    $RGs = Get-AzResourceGroup
 
   }
 
   Process {
-    foreach($RG in $RGs) 
-    {
-      $group = Get-AzResourceGroup -Name $RG
-    
-      # Get all resources in RG and add TAG
-      $resources = Get-AzResource -ResourceGroupName $group.ResourceGroupName
-      foreach ($r in $resources) 
+    if($RGs) { 
+      foreach($RG in $RGs) 
       {
-        # check if it is already tagged
-        $tags = (Get-AzResource -ResourceId $r.ResourceId).Tags
-        if ($tags) 
-        {
-          foreach ($key in $group.Tags.Keys) 
-          {
-            if (-not($tags.ContainsKey($key))) 
-            {
-              $tags.Add($key, $group.Tags.$key)
-            }
-          }
-          Write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
-          Set-AzResource -Tag $tags -ResourceId $r.ResourceId -Force
-        }
-        else
-        {
-          write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
-          Set-AzResource -Tag $group.Tags -ResourceId $r.ResourceId -Force
-        }
-      }
+        $group = Get-AzResourceGroup -Name $RG.ResourceGroupName
+      
+        # Get all resources in RG and add TAG
+        $resources = Get-AzResource -ResourceGroupName $group.ResourceGroupName
 
-      # Set Tag for RG
-      write-PSFMessage -Level Verbose -Message "Tagging $($group.ResourceGroupName) with $($group.Tags)" -ModuleName 'AzureResourceCleanup'
-      Set-AzResourceGroup -ResourceId (Get-AzResourceGroup -Name $RG).ResourceId -Tag @{
-        expireOn = $date
+        if($resources){ 
+          foreach ($r in $resources) 
+          {
+              # check if it is already tagged
+              $tags = (Get-AzResource -ResourceId $r.ResourceId).Tags
+              if ($tags) 
+              {
+                  $tags.Add( 'expireOn', $expireOn )
+              
+                write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($tags)" -ModuleName 'AzureResourceCleanup' 
+                Set-AzResource -ResourceId $r.ResourceId -Tag $tags
+              }
+              else
+              {
+                write-PSFMessage -Level Verbose -Message "Tagging $($r.Name)" -ModuleName 'AzureResourceCleanup'  
+                Set-AzResource -ResourceId $r.ResourceId -Tag $tag
+              }
+          }
+        }
+        # Set Tag for RG
+       write-PSFMessage -Level Verbose -Message "Tagging $($RG.ResourceGroupName) with $($tag)" -ModuleName 'AzureResourceCleanup'
+       Set-AzResourceGroup -Id $RG.ResourceId -Tag $tag
       }
     }
   }
