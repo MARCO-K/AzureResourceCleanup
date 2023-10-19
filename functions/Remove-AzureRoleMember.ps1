@@ -2,20 +2,17 @@ Function Remove-AzureAllRoleMember
 {
   <#
     .Synopsis
-    The cmdlet adds an expiredOn tag to all ressources.
+    The cmdlet removes all directory role members.
     
     .Description
-    The cmdlet adds an expiredOn tag to all ressourcesand resource groups. 
-    The tag is set to the date specified in the parameter expireOn.
+    The cmdlet removes all directory role members.
+    It eexcludes all members of the Global Administrator role.
     
     .PARAMETER TenantID
     This parameter is the actual tenant id.
-    
-    .PARAMETER expireOn
-    This parameter is the date when the ressources will be deleted.
 
     .Example
-     Add-AzureExpiredTag $tenant = ''
+     Remove-AzureAllRoleMember $tenant = ''
 
   #>
 
