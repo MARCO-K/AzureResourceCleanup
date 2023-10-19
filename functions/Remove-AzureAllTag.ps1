@@ -11,7 +11,7 @@ Function Remove-AzureAllTag
     This parameter is the actual tenant id.
     
     .Example
-    Remove-AzureExpiredTag $tenant = ''
+    Remove-AzureAllTag $tenant = ''
 
   #>
 
@@ -54,21 +54,23 @@ Function Remove-AzureAllTag
     }
 
     # Get all RG names
-    $RGs = (Get-AzResourceGroup).ResourceGroupName
+    $RGs = Get-AzResourceGroup
   }
 
   Process {
-    foreach($RG in $RGs) 
-    {
-        $resources = Get-AzResource -ResourceGroupName $RG
-        
-        foreach ($resource in $resources) {
-            Set-AzResource -ResourceId $resource.ResourceId -Tag @{} -Force
-        }
+    if($RGs){
+      foreach($RG in $RGs) 
+      {
+          $resources = Get-AzResource -ResourceGroupName $RG.ResourceGroupName
+          
+          foreach ($resource in $resources) {
+              Write-PSFMessage -Level Verbose -Message "Removing tags on $($resource.Name)" -ModuleName 'AzureResourceCleanup'
+              Set-AzResource -ResourceId $resource.ResourceId -Tag @{} -Force
+          }
+      }
+      # Remove tags for the resource group
+      $null = Set-AzResourceGroup -Name $RG.ResourceGroupName -Tag @{}
     }
-    # Remove tags for the resource group
-    Set-AzResourceGroup -Name $ResourceGroupName -Tag @{} -force
-
   }
 
   end {
