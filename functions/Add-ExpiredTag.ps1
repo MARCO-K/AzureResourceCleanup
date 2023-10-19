@@ -23,7 +23,7 @@
   Param(
     [Parameter(Mandatory)]
     [string]$TenantID,
-    [parameter(Mandatory,Helpmessage = 'Input format: yyyy-mm-dd')][ValidateScript(`
+    [parameter(Mandatory,Helpmessage = 'Input format: yyyy/mm/dd')][ValidateScript(`
         {
           ([datetime]::ParseExact($_,'yyyy/mm/dd',[cultureinfo]::CreateSpecificCulture('en-US')) -le (Get-Date)) 
     })]$expireOn
