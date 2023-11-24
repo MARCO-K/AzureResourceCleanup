@@ -77,6 +77,14 @@ Function Remove-AzureRecoveryService
       $vaultProp = Get-AzRecoveryServicesVaultProperty -VaultId $vault.ID
       if ($vaultProp.SoftDeleteFeatureState -eq 'Enabled') 
       {
+        try { 
+          $null = Set-AzRecoveryServicesAsrVaultContext -Vault $vault
+          }
+          catch {
+            Write-PSFMessage -Level Error -Message "Error while setting context for the Azure Backup Recovery Services vault: $_" -ModuleName 'AzureResourceCleanup'
+            break
+        }
+
         $prop_res = Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState Disable -Confirm:$false -ErrorAction SilentlyContinue -ErrorVariable err
         if ($err -ne $null) 
         {
