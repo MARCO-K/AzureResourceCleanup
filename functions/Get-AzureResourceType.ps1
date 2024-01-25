@@ -43,12 +43,14 @@ Function Get-AzureResourceType
         throw $_.Exception
       }
     }
-        Write-PSFMessage -Level Verbose -Message $Connection.Context -ModuleName 'AzureResourceCleanup'
+        Write-PSFMessage -Level Verbose -Message "Will process subscription: $($Connection.Context.Subscription.Name)" -ModuleName 'AzureResourceCleanup'
     }
     process {
+        Write-PSFMessage -Level Verbose -Message 'Retrieve all Resource provider...' -ModuleName 'AzureResourceCleanup'
         $Providers = Get-AzResourceProvider -ListAvailable -Pre
 
         if($Providers) {
+            Write-PSFMessage -Level Verbose -Message 'Retrieve all Resource types for any provider...' -ModuleName 'AzureResourceCleanup'
             $ResourceTypes =
             foreach($Provider in $Providers) {
                 $Provider.ResourceTypes | ForEach-Object {
@@ -65,6 +67,10 @@ Function Get-AzureResourceType
         }
     }
     end {
+        Write-PSFMessage -Level Verbose -Message 'Output all Resource types...' -ModuleName 'AzureResourceCleanup'
+        if($Registered) {
+            $ResourceTypes = $ResourceTypes | Where-Object { $_.RegistrationState -eq 'Registered' }    
+        }
         $ResourceTypes
     }
 }
