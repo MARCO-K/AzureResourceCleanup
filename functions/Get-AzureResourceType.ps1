@@ -3,10 +3,16 @@ Function Get-AzureResourceType
   <#
       .Synopsis
       The cmdlet removes all Azure resources.
+    
       .Description
       The cmdlet removes all Azure resources. It can exclude various resource types and check the expiredOn tag.
-      .PARAMETER TenantID
+      
+     .PARAMETER TenantID
       This parameter is the actual tenant id. This is a mandatory parameter.
+
+      .PARAMETER Registered
+      This parameter is used to filter only registered resources.
+    
       .Example
       Get-AzureResourceType -TenantID $TenantID
   #>
@@ -14,7 +20,8 @@ Function Get-AzureResourceType
   [cmdletbinding()]
   Param(
     [Parameter(Mandatory)]
-    [string]$TenantID
+    [string]$TenantID,
+    [switch]$Registered
   )
 
   begin {
@@ -44,7 +51,16 @@ Function Get-AzureResourceType
         if($Providers) {
             $ResourceTypes =
             foreach($Provider in $Providers) {
-                $Provider.ResourceTypes
+                $Provider.ResourceTypes | ForEach-Object {
+                    [PSCustomObject]@{
+                        ProviderNamespace = $Provider.ProviderNamespace
+                        ResourceTypeName = $_.ResourceTypeName
+                        Locations = $_.Locations
+                        ApiVersions = $_.ApiVersions
+                        RegistrationState = $Provider.RegistrationState
+                    }
+                }
+
             }
         }
     }
