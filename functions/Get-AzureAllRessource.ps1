@@ -1,11 +1,11 @@
-Function Get-AzureAllRessource
+Function Get-AzureAllResource
 {
   <#
     .Synopsis
-    The cmdlet lists all Azure ressources in any ressource group.
+    The cmdlet lists all Azure resources in any resource group.
     
     .Description
-    The cmdlet lists all Azure ressources in any ressource group.
+    The cmdlet lists all Azure resources in any resource group.
   
     .PARAMETER TenantID
     This parameter is the actual tenant id. The parmeter is mandatory.
@@ -20,7 +20,7 @@ Function Get-AzureAllRessource
     This parameter can be used to check the ExpireOn tag.
 
     .Example
-    Get-AzureAllRessource -TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
+    Get-AzureAllresource -TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
 
   #>
 
