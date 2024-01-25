@@ -65,7 +65,7 @@ Function Get-AzureAllResource
     }
     
     # Get all locked resources
-    $lockedResources = Get-AzResourceLock | Select-Object -ExpandProperty ResourceName
+    $lockedResources = Get-AzResourceLock
     
     #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
     class AzResourceGraphException : Exception {
@@ -116,7 +116,7 @@ Function Get-AzureAllResource
     #exclude locked and excluded resources
     $resources = 
     foreach($res in $expResources) {
-        if ((($res.type).split('/')[0] -inotin $Exclude ) -and ($res.Name -inotin $lockedResources) ) 
+        if ((($res.type).split('/')[0] -inotin $Exclude ) -and ($res.Name -inotin $lockedResources.ResourceName) ) 
         { $res }
     }
     
