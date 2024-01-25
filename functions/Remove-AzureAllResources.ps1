@@ -41,7 +41,8 @@
     #connect to AZ account
     try
     {
-      $Connection = if ($subscritionID) {
+      $Connection = 
+      if ($subscritionID) {
         Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
       }
       else  {
@@ -57,16 +58,18 @@
       }
       else
       {
-        Write-Error -Message $_.Exception
+        Write-psfmessage -level Error -Message $_.Exception
         throw $_.Exception
       }
     }
-    Write-Verbose -Message $Connection
+    Write-Verbose -Message $Connection.
     
-        #check if expireOn tag should be used
-    $resourceGraphQuery = if ($CheckExpireOn) {
+    #check if expireOn tag should be used
+    $resourceGraphQuery = 
+    if ($CheckExpireOn) {
       'Resources | where todatetime(tags.expireOn) < now()'
-    } else {
+    } 
+    else {
       'Resources'
     }
     
@@ -88,7 +91,8 @@
     ## Collect all expired resources
     try 
     {
-      $expResources =  if ($subscritionID) 
+      $expResources =  
+      if ($subscritionID) 
       {
         Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
       }
@@ -100,7 +104,6 @@
       if ($null -ne $grapherror.Length) 
       {
         $errorJSON = $grapherror.ErrorDetails.Message | ConvertFrom-Json
-
         throw [AzResourceGraphException]::new($errorJSON.error.details.code, $errorJSON.error.details.message)
       }
     }
@@ -115,8 +118,6 @@
       Write-Verbose -Message 'An error occurred in the script'
       Write-Verbose -Message $_.Exception.message
     }
-
-
 
     #exclude locked and excluded resources
     $resources = 
@@ -148,9 +149,7 @@
       foreach($RG in $RGs)
       {
         $RGname = $RG.ResourceGroupName
-        $count = (Get-AzResource | Where-Object -FilterScript {
-            $_.ResourceGroupName -match $RGname
-        }).Count
+        $count = (Get-AzResource | Where-Object { $_.ResourceGroupName -match $RGname }).Count
 
         # now remove empty RGs
         if($count -eq 0)
