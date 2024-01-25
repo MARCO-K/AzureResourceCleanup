@@ -8,7 +8,7 @@ Function Remove-AzureAppService
     The cmdlet removes all AzureAppServices in any ressource groups.
     
     .PARAMETER TenantID
-    This parameter is the actual tenant id.
+    This parameter is the actual tenant id. The parmeter is mandatory.
     
     .PARAMETER ResourceGroupName
     This parameter is the name of a resource group.

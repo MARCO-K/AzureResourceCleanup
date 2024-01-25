@@ -1,40 +1,34 @@
-﻿Function Remove-AzureAllResources
+Function Get-AzureAllRessource
 {
   <#
-      .Synopsis
-      The cmdlet removes all Azure resources.
-      .Description
-      The cmdlet removes all Azure resources. It can exclude various resource types and check the expiredOn tag.
-      .PARAMETER TenantID
-      This parameter is the actual tenant id.
-      .PARAMETER SubscritionID
-      This parameter is the actual subscription id.
-      .PARAMETER Exclude
-      This parameter can be used to exclude several resource types. Possible exclusions are: 'Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage'.
-      .Parameter checkexpireOn
-      This parameter can be used to check the ExpireOn tag.
-      .Example
-      Remove-AzureAllResources -TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
+    .Synopsis
+    The cmdlet lists all Azure ressources in any ressource group.
+    
+    .Description
+    The cmdlet lists all Azure ressources in any ressource group.
+  
+    .PARAMETER TenantID
+    This parameter is the actual tenant id. The parmeter is mandatory.
+
+    .PARAMETER SubscritionID
+    This parameter is the actual subscription id.
+
+    .PARAMETER Exclude
+    This parameter can be used to exclude several resource types. Possible exclusions are: 'Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage'.
+
+    .Parameter checkexpireOn
+    This parameter can be used to check the ExpireOn tag.
+
+    .Example
+    Get-AzureAllRessource -TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
+
   #>
 
   [cmdletbinding()]
   Param(
     [Parameter(Mandatory)]
     [string]$TenantID,
-    [ValidateScript({
-          $Subscriptions = ((Get-AzContext).Account | Select-Object -ExpandProperty ExtendedProperties).Subscriptions
-          $Subscriptions = $Subscriptions.Split(',')
-          if ($_ -in $Subscriptions) 
-          {
-            $true 
-          }
-          else 
-          {
-            throw "$_ is invalid."
-          }
-    })][string]$subscritionID,
-    [Validateset('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage')][string[]]$Exclude,
-    [switch]$checkexpireOn
+    [string]$ResourceGroupName
   )
 
   begin {
@@ -57,11 +51,11 @@
       }
       else
       {
-        Write-Error -Message $_.Exception
+        Write-PSFMessage -Level Error -Message $_.Exception -ModuleName 'AzResourceGraph'
         throw $_.Exception
       }
     }
-    Write-Verbose -Message $Connection
+    Write-PSFMessage -Level Verbose -Message $Connection.Context -ModuleName 'AzResourceGraph'
     
         #check if expireOn tag should be used
     $resourceGraphQuery = if ($CheckExpireOn) {
@@ -88,7 +82,8 @@
     ## Collect all expired resources
     try 
     {
-      $expResources =  if ($subscritionID) 
+      $expResources =  
+      if ($subscritionID) 
       {
         Search-AzGraph -Query $resourceGraphQuery -ErrorVariable grapherror -ErrorAction SilentlyContinue -Subscription $subscritionID
       }
@@ -106,14 +101,14 @@
     }
     catch [AzResourceGraphException] 
     {
-      Write-Verbose -Message 'An error on KQL query'
-      Write-Verbose -Message $_.Exception.message
-      Write-Verbose -Message $_.Exception.additionalData
+      Write-PSFMessage -Level Error -Message 'An error on KQL query' -ModuleName 'AzResourceGraph'
+      Write-PSFMessage -Level Error -Message $_.Exception.message -ModuleName 'AzResourceGraph'
+      Write-PSFMessage -Level Error -Message $_.Exception.additionalData -ModuleName 'AzResourceGraph'
     }
     catch 
     {
-      Write-Verbose -Message 'An error occurred in the script'
-      Write-Verbose -Message $_.Exception.message
+      Write-PSFMessage -Level Error -Message 'An error occurred in the script' -ModuleName 'AzResourceGraph'
+      Write-PSFMessage -Level Error -Message $_.Exception.message -ModuleName 'AzResourceGraph'
     }
 
 
@@ -134,30 +129,15 @@
         # Remove every single resource
         try 
         {
-          Remove-AzResource -ResourceId $res -Force
+          Get-AzResource -ResourceId $res
         }
         catch 
         {
-          Write-Error -Message $_.Exception
+          Write-PSFMessage -Level Error -Message $_.Exception -ModuleName 'AzResourceGraph'
         }
       }
 
-      $RGs = Get-AzResourceGroup
- 
-      $result +=
-      foreach($RG in $RGs)
-      {
-        $RGname = $RG.ResourceGroupName
-        $count = (Get-AzResource | Where-Object -FilterScript {
-            $_.ResourceGroupName -match $RGname
-        }).Count
 
-        # now remove empty RGs
-        if($count -eq 0)
-        {
-          Remove-AzResourceGroup -Name $RGname -Force
-        }
-      }
     }
   }
   end {
