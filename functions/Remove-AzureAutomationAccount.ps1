@@ -64,7 +64,8 @@ Function Remove-AzureAutomationAccount
       # get all Automation Accounts
       $aa = Get-AzAutomationAccount -ResourceGroupName $RG.ResourceGroupName
       $ws = Get-AzOperationalInsightsWorkspace -ResourceGroupName $rg.ResourceGroupName
-      $linked = Get-AzOperationalInsightsLinkedService -ResourceGroupName $rg.ResourceGroupName -WorkspaceName $ws.Name
+      if($ws)
+        { $linked = Get-AzOperationalInsightsLinkedService -ResourceGroupName $rg.ResourceGroupName -WorkspaceName $ws.Name }
       
       # unlink workspaces if linked
       if($aa -and $linked -and $ws) {
@@ -92,6 +93,6 @@ Function Remove-AzureAutomationAccount
   end {
     Write-PSFMessage -Level Verbose -Message '... Finished removing utomation Accounts ...' -ModuleName 'AzureResourceCleanup'
     #disconnect from AZ account
-    Disconnect-AzAccount
+    $null = Disconnect-AzAccount
   }
 }
