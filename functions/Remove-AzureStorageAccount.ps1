@@ -66,6 +66,7 @@ Param(
      else {
       Write-PSFMessage -Level Verbose -Message "All StorageAccounts in ANY resource group will be removed" -ModuleName 'AzureResourceCleanup'
      }
+     
    }
 
    process {
