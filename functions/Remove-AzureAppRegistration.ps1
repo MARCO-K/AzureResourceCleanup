@@ -2,10 +2,10 @@ Function Remove-AzureAppRegistration
 {
   <#
       .Synopsis
-      The cmdlet removes all Azure resources.
+      The cmdlet removes all app registrations.
     
       .Description
-      The cmdlet removes all Azure resources. It can exclude various resource types and check the expiredOn tag.
+      The cmdlet removes all app registrations. It can exclude apps by the name.
       
      .PARAMETER TenantID
       This parameter is the actual tenant id. This is a mandatory parameter.
@@ -70,6 +70,7 @@ Function Remove-AzureAppRegistration
         }
     }
     end {
-        Write-PSFMessage -Level Verbose -Message "... Deleted $($appCount) apps ..."    
+        Write-PSFMessage -Level Verbose -Message "... Deleted $($appCount) apps ..."   
+        $null = Disconnect-Graph
     }
 }
