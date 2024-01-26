@@ -79,19 +79,19 @@ Function Remove-AzureAutomationAccount
 
       if($aa) {
         # remove Automation Accounts
-        Write-PSFMessage -Level Verbose -Message "Removing Automation Account $($aa.Name)" -ModuleName 'AzureResourceCleanup'
+        Write-PSFMessage -Level Verbose -Message "Removing Automation Account: $($aa.AutomationAccountName)" -ModuleName 'AzureResourceCleanup'
         try {
-          Remove-AzAutomationAccount -ResourceGroupName $rg.ResourceGroupName -Name $aa.Name -Force
+          Remove-AzAutomationAccount -ResourceGroupName $rg.ResourceGroupName -Name $aa.AutomationAccountName -Force
         }
         catch {
-          Write-PSFMessage -Level Error -Message "Failed to remove Automation Account $($aa.Name)" -ModuleName 'AzureResourceCleanup'
+          Write-PSFMessage -Level Error -Message "Failed to remove Automation Account $($aa.AutomationAccountName)" -ModuleName 'AzureResourceCleanup'
         }      
       }
     }
   }
   end {
-    $ws
+    Write-PSFMessage -Level Verbose -Message '... Finished removing utomation Accounts ...' -ModuleName 'AzureResourceCleanup'
     #disconnect from AZ account
-    #Disconnect-AzAccount
+    Disconnect-AzAccount
   }
 }
