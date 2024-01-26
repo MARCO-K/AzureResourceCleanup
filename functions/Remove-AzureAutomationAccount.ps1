@@ -58,4 +58,40 @@ Function Remove-AzureAutomationAccount
       Write-PSFMessage -Level Verbose -Message "All StorageAccounts in ANY resource group will be removed" -ModuleName 'AzureResourceCleanup'
      }     
   }
+
+  process {
+    foreach($RG in $RGs) {
+      # get all Automation Accounts
+      $aa = Get-AzAutomationAccount -ResourceGroupName $RG.ResourceGroupName
+      $ws = Get-AzOperationalInsightsWorkspace -ResourceGroupName $rg.ResourceGroupName
+      $linked = Get-AzOperationalInsightsLinkedService -ResourceGroupName $rg.ResourceGroupName -WorkspaceName $ws.Name
+      
+      # unlink workspaces if linked
+      if($aa -and $linked -and $ws) {
+        Write-PSFMessage -Level Verbose -Message "Unlinking workspace $($ws.Name) from $($linked.Name)" -ModuleName 'AzureResourceCleanup'
+        try {
+          Remove-AzOperationalInsightsLinkedService -ResourceGroupName $rg.ResourceGroupName -WorkspaceName $ws.Name -LinkedServiceName $linked.Name -
+        }
+        catch {
+          Write-PSFMessage -Level Error -Message "Failed to unlink workspace $($ws.Name) from $($linked.Name)" -ModuleName 'AzureResourceCleanup'
+        }
+      }
+
+      if($aa) {
+        # remove Automation Accounts
+        Write-PSFMessage -Level Verbose -Message "Removing Automation Account $($aa.Name)" -ModuleName 'AzureResourceCleanup'
+        try {
+          Remove-AzAutomationAccount -ResourceGroupName $rg.ResourceGroupName -Name $aa.Name -Force
+        }
+        catch {
+          Write-PSFMessage -Level Error -Message "Failed to remove Automation Account $($aa.Name)" -ModuleName 'AzureResourceCleanup'
+        }      
+      }
+    }
+  }
+  end {
+    $ws
+    #disconnect from AZ account
+    #Disconnect-AzAccount
+  }
 }
