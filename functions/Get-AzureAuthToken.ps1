@@ -19,7 +19,7 @@ function Get-AzureAuthToken{
 
     .EXAMPLE
         
-        Get-GraphTokens -Credential $cred -Client MSGraph -Resource https://graph.microsoft.com
+        Get-AzureAuthToken -Credential $cred -Client MSGraph -Resource https://graph.microsoft.com
         
      #>
     [CmdletBinding()]
