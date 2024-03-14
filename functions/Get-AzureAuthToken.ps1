@@ -21,10 +21,14 @@ function Get-AzureAuthToken{
      #>
     [CmdletBinding()]
     param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$false, ParameterSetName = 'Credential')]
     [pscredential]$credential,
-    [Parameter(Mandatory=$False)]
-    [String]$ClientID = 'd3590ed6-52b3-4102-aeff-aad2292ab01c',    
+    [Parameter(Mandatory=$False,ParameterSetName = 'ClientID')]
+    [String]$ClientID = 'd3590ed6-52b3-4102-aeff-aad2292ab01c', 
+    [Parameter(Mandatory,ParameterSetName = 'ClientSecret')]
+    [String]$ClientSecret, 
+    [Parameter(Mandatory=$false,ParameterSetName = 'ClientID')]
+    [stirng]$RedirectURI = 'http://localhost',
     [Parameter(Mandatory=$False)]
     [String]$Resource = 'https://graph.microsoft.com',
     [Parameter(Mandatory=$False)]
@@ -34,11 +38,6 @@ function Get-AzureAuthToken{
 
     begin{
 
-        Write-PSFMessage -Level Verbose -Message 'Initiating the User/Password authentication flow'
-        $username = $credential.UserName
-        $password = $credential.Password
-
-        $passwordText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
         $UserAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko'
         $url = 'https://login.microsoft.com/common/oauth2/token' ##https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow
 
@@ -47,7 +46,19 @@ function Get-AzureAuthToken{
             'Content-Type' = 'application/x-www-form-urlencoded'
             'User-Agent' = $UserAgent
         }
-        $body = "grant_type=password&password=$passwordText&client_id=$ClientID&username=$username&resource=$Resource&client_info=1&scope=$scope"
+
+        if($credential){ 
+            Write-PSFMessage -Level Verbose -Message 'Initiating the User/Password authentication flow'
+            $username = $credential.UserName
+            $password = $credential.Password
+            $passwordText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+
+            $body = "grant_type=password&password=$passwordText&client_id=$ClientID&username=$username&resource=$Resource&client_info=1&scope=$scope"
+        }
+        else {
+            Write-PSFMessage -Level Verbose -Message 'Initiating the client authentication flow'
+            $body = "grant_type=authorization_code&client_id=$ClientID&client_secret=$ClientSecret&resource=$Resource&client_info=1&scope=$scope"
+        }
     }
 
     Process{

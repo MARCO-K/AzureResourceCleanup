@@ -28,6 +28,8 @@ Function Get-AzureAllResource
   Param(
     [Parameter(Mandatory)]
     [string]$TenantID,
+    [Parameter(Mandatory=$false,ParameterSetName="TokenObj")][string]$AccessToken = $null,
+    [Parameter(Mandatory,ParameterSetName="TokenObj")][string]$AccountID,
     [string]$ResourceGroupName
   )
 
@@ -35,11 +37,16 @@ Function Get-AzureAllResource
     #connect to AZ account
     try
     {
-      $Connection = if ($subscritionID) {
-        Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+      if(-not $AccessToken){ 
+        $Connection = if ($subscritionID) {
+          Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+        }
+        else  {
+          Connect-AzAccount -TenantId $TenantID
+        }
       }
-      else  {
-        Connect-AzAccount -TenantId $TenantID
+      else {
+        $Connection = Connect-AzAccount -AccessToken $AccessToken -AccountId $AccountID -TenantId $TenantID
       }
     }
     catch 
