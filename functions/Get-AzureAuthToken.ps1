@@ -7,9 +7,6 @@ function Get-AzureAuthToken{
         Authenticate and store tokens in the global $tokens variable as well as the tenant ID in $tenantid.
     .PARAMETER Credential
         Provide a Credential for authentication.
-    
-    .PARAMETER Client
-        Provide a Client to authenticate to. Use Custom to provide your own ClientID.
 
     .PARAMETER ClientID
         Provide a ClientID to use with the Custom client option.
@@ -27,14 +24,12 @@ function Get-AzureAuthToken{
     [Parameter(Mandatory)]
     [pscredential]$credential,
     [Parameter(Mandatory=$False)]
-    [ValidateSet('Yammer','Outlook','MSTeams','Graph','AzureCoreManagement','AzureManagement','MSGraph','DODMSGraph','Custom','Substrate')]
-    [String[]]$Client = 'MSGraph',
-    [Parameter(Mandatory=$False)]
     [String]$ClientID = 'd3590ed6-52b3-4102-aeff-aad2292ab01c',    
     [Parameter(Mandatory=$False)]
     [String]$Resource = 'https://graph.microsoft.com',
     [Parameter(Mandatory=$False)]
     [String]$scope = 'openid'
+
     )
 
     begin{
@@ -45,7 +40,7 @@ function Get-AzureAuthToken{
 
         $passwordText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
         $UserAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko'
-        $url = 'https://login.microsoft.com/common/oauth2/token'
+        $url = 'https://login.microsoft.com/common/oauth2/token' ##https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow
 
         $headers = @{
             'Accept' = 'application/json'
@@ -72,7 +67,7 @@ function Get-AzureAuthToken{
             }
         } catch {
             $details = $_.ErrorDetails.Message | ConvertFrom-Json
-            Write-Output $details.error
+            Write-PSFMessage -Level Error -Message "Failed to authenticate with the provided credentials. Error: $($details.error_description)"
         }
     }
 
