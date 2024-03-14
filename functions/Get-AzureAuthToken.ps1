@@ -32,7 +32,9 @@ function Get-AzureAuthToken{
     [Parameter(Mandatory=$False)]
     [String]$ClientID = 'd3590ed6-52b3-4102-aeff-aad2292ab01c',    
     [Parameter(Mandatory=$False)]
-    [String]$Resource = 'https://graph.microsoft.com'
+    [String]$Resource = 'https://graph.microsoft.com',
+    [Parameter(Mandatory=$False)]
+    [String]$scope = 'openid'
     )
 
     begin{
@@ -50,7 +52,7 @@ function Get-AzureAuthToken{
             'Content-Type' = 'application/x-www-form-urlencoded'
             'User-Agent' = $UserAgent
         }
-        $body = "grant_type=password&password=$passwordText&client_id=$ClientID&username=$username&resource=$Resource&client_info=1&scope=openid"
+        $body = "grant_type=password&password=$passwordText&client_id=$ClientID&username=$username&resource=$Resource&client_info=1&scope=$scope"
     }
 
     Process{
@@ -77,7 +79,6 @@ function Get-AzureAuthToken{
     end { 
         Write-PSFMessage -Level Verbose -Message 'Successful authentication. Access and refresh tokens have been written to the global $tokens variable.'
         $global:tokens = $tokens
-        $tokens
     }
 }
         
