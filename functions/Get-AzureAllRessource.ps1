@@ -55,7 +55,8 @@ Function Get-AzureAllResource
             Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
           }
           else  {
-            Connect-AzAccount -TenantId $TenantID
+            ### needs some more testing
+            Connect-AzAccount -TenantId $TenantID -AccessToken $AccessToken.access_token -AccountId $AccountID
           }
         }
         else {
@@ -78,7 +79,7 @@ Function Get-AzureAllResource
     }
     else {
       if(SignIn $connection) {
-        Write-PSFMessage -Level Verbose -Message $Connection.Context -ModuleName 'AzResourceGraph'
+        Write-PSFMessage -Level Verbose -Message "... Already connected to: $($Connection.Context.Subscription)" -ModuleName 'AzResourceGraph'
       }
       else {
         Write-PSFMessage -Level Error -Message '... Connection not found.' -ModuleName 'AzResourceGraph'
@@ -88,13 +89,15 @@ Function Get-AzureAllResource
     
     #check if expireOn tag should be used
     $resourceGraphQuery = if ($CheckExpireOn) {
+      Write-PSFMessage -Level Verbose -Message '... Checking only for expired resources' -ModuleName 'AzResourceGraph'
       'Resources | where todatetime(tags.expireOn) < now()'
     } else {
+      Write-PSFMessage -Level Verbose -Message '... Checking all resources' -ModuleName 'AzResourceGraph'
       'Resources'
     }
     
     # Get all locked resources
-    $lockedResources = Get-AzResourceLock
+    $lockedResources = Get-AzResourceLock -DefaultProfile $Connection.Context -ErrorAction SilentlyContinue
     
     #create a custom exception to handle a Graph Resource error as a standard PowerShell exception
     class AzResourceGraphException : Exception {
@@ -158,7 +161,15 @@ Function Get-AzureAllResource
         # Remove every single resource
         try 
         {
-          Get-AzResource -ResourceId $res
+          $resource = Get-AzResource -ResourceId $res
+          [PSCustomObject]@{         
+            Name = $resource.Name
+            ResourceId = $resource.ResourceId
+            ResourceGroupName = $resource.ResourceGroupName
+            ResourceType = $resource.ResourceType
+            Location = $resource.Location
+            Tags = $resource.Tags
+          }
         }
         catch 
         {
