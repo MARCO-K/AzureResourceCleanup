@@ -50,7 +50,7 @@ Function Remove-AzureAllTag
     else 
     {
       $context = Get-AzContext
-      Write-PSFMessage -Level Verbose -Message "All vaults in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
+      Write-PSFMessage -Level Verbose -Message "All tags in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
     }
 
     # Get all RG names
@@ -65,7 +65,7 @@ Function Remove-AzureAllTag
           
           foreach ($resource in $resources) {
               Write-PSFMessage -Level Verbose -Message "Removing tags on $($resource.Name)" -ModuleName 'AzureResourceCleanup'
-              Set-AzResource -ResourceId $resource.ResourceId -Tag @{} -Force
+              $null = Set-AzResource -ResourceId $resource.ResourceId -Tag @{} -Force
           }
       }
       # Remove tags for the resource group
@@ -75,6 +75,8 @@ Function Remove-AzureAllTag
 
   end {
     Write-PSFMessage -Level Verbose -Message '... Removing all tags on all ressources.' -ModuleName 'AzureResourceCleanup'
-    disconnect-AzAccount
+    if(-not $keepAlive) {
+      $null = Disconnect-AzAccount
+    }
   }
 }
