@@ -86,24 +86,25 @@
                   $tags.Add( 'expireOn', $expireOn )
               
                 write-PSFMessage -Level Verbose -Message "Tagging $($r.Name) with $($tags)" -ModuleName 'AzureResourceCleanup' 
-                Set-AzResource -ResourceId $r.ResourceId -Tag $tags
+                $null = Set-AzResource -ResourceId $r.ResourceId -Tag $tags -force
               }
               else
               {
                 write-PSFMessage -Level Verbose -Message "Tagging $($r.Name)" -ModuleName 'AzureResourceCleanup'  
-                Set-AzResource -ResourceId $r.ResourceId -Tag $tag
+                $null = Set-AzResource -ResourceId $r.ResourceId -Tag $tag -force
               }
           }
         }
         # Set Tag for RG
        write-PSFMessage -Level Verbose -Message "Tagging $($RG.ResourceGroupName) with $($tag)" -ModuleName 'AzureResourceCleanup'
-       Set-AzResourceGroup -Id $RG.ResourceId -Tag $tag
+       $null = Set-AzResourceGroup -Id $RG.ResourceId -Tag $tag
       }
     }
   }
-
-  end {
+end {
     Write-PSFMessage -Level Verbose -Message "All resource groups and  in context $($context.Name) has have been tagged" -ModuleName 'AzureResourceCleanup'
-    $null = Disconnect-AzAccount -Scope Process
+    if(-not $keepAlive) {
+      $null = Disconnect-AzAccount
+    }
   }
 }
