@@ -127,7 +127,6 @@ Function Get-AzureAllResource
       if ($null -ne $grapherror.Length) 
       {
         $errorJSON = $grapherror.ErrorDetails.Message | ConvertFrom-Json
-
         throw [AzResourceGraphException]::new($errorJSON.error.details.code, $errorJSON.error.details.message)
       }
     }

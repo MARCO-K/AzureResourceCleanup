@@ -2,7 +2,7 @@ Function SignIn {
     param ([Parameter(Mandatory)]$Connection)
 
     try { 
-        $ctx = Get-AzContext
+        $ctx = Get-AzContext -ListAvailable -DefaultProfile $Connection.Context
     }
     catch { 
         Write-PSFMessage -Level Error -Message 'cannot create context'
