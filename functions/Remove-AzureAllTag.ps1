@@ -10,6 +10,9 @@ Function Remove-AzureAllTag
     .PARAMETER TenantID
     This parameter is the actual tenant id.
     
+    .PARAMETER keepAlive
+    This parameter can be used to keep the connection alive.
+
     .Example
     Remove-AzureAllTag $tenant = ''
 
@@ -18,7 +21,9 @@ Function Remove-AzureAllTag
   [cmdletbinding()]
   Param(
     [Parameter(Mandatory)]
-    [string]$TenantID
+    [string]$TenantID,
+    [Parameter(Mandatory=$false)][switch]$keepAlive
+
   )
 
   begin {

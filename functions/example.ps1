@@ -10,6 +10,6 @@ $resources = Get-AzureAllResource -Connection $connection -keepAlive -Verbose
 $resources
 
 ## get all resources with expired tag
-Add-AzureExpiredTag -TenantID $tennantId -expireOn '2024/12/31' -Verbose
+Add-AzureExpiredTag -TenantID $tennantId -expireOn '2024/12/31' -keepAlive -Verbose
 
-Remove-AzureAllTag -TenantID $tennantId -Verbose
+Remove-AzureAllTag -TenantID $tennantId -keepAlive -Verbose

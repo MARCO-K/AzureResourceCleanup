@@ -14,6 +14,9 @@
     .PARAMETER expireOn
     This parameter is the date when the ressources will be deleted.
 
+    .PARAMETER keepAlive
+    This parameter can be used to keep the connection alive.
+
     .Example
      Add-AzureExpiredTag $tenant = ''
 
@@ -26,7 +29,8 @@
     [parameter(Mandatory,Helpmessage = 'Input format: yyyy/mm/dd')][ValidateScript(`
         {
           ([datetime]::ParseExact($_,'yyyy/mm/dd',[cultureinfo]::CreateSpecificCulture('en-US')) -le (Get-Date)) 
-    })]$expireOn
+    })]$expireOn,
+    [Parameter(Mandatory=$false)][switch]$keepAlive
   )
 
   begin {
@@ -59,7 +63,7 @@
     else 
     {
       $context = Get-AzContext
-      Write-PSFMessage -Level Verbose -Message "All vaults in context $($context.name) will be removed" -ModuleName 'AzureResourceCleanup'
+      Write-PSFMessage -Level Verbose -Message "All tags in context $($context.name) will be updated" -ModuleName 'AzureResourceCleanup'
     }
 
     # Get all RG names
