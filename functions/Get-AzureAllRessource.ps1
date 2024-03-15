@@ -13,11 +13,20 @@ Function Get-AzureAllResource
     .PARAMETER SubscritionID
     This parameter is the actual subscription id.
 
+    .PARAMETER AccessToken
+    This parameter is the actual access token. 
+    .PARAMETER AccountID
+    This parameter is the actual account id. If an AccessToken is provided this parmeter is mandatory.
+
+    
     .PARAMETER Exclude
     This parameter can be used to exclude several resource types. Possible exclusions are: 'Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage'.
 
     .Parameter checkexpireOn
     This parameter can be used to check the ExpireOn tag.
+
+    .PARAMETER keepAlive
+    This parameter can be used to keep the connection alive.
 
     .Example
     Get-AzureAllresource -TenantID $TenantID -SubscritionID $SubscritionID -checkexpireOn
@@ -26,38 +35,58 @@ Function Get-AzureAllResource
 
   [cmdletbinding()]
   Param(
-    [Parameter(Mandatory)]
-    [string]$TenantID,
-    [string]$ResourceGroupName
+    [Parameter(Mandatory=$false)][string]$TenantID,
+    [Parameter(Mandatory=$false)][string]$subscritionID,
+    [Parameter(Mandatory=$false,ParameterSetName="TokenObj")]$AccessToken = $null,
+    [Parameter(Mandatory,ParameterSetName="TokenObj")][string]$AccountID,
+    [Parameter(Mandatory=$false,ParameterSetName="ConnObj")]$Connection = $null,
+    [Parameter(Mandatory=$false)][string[]]$Exclude = @('Microsoft.RecoveryServices','Microsoft.StorageSync','Microsoft.Compute','Microsoft.Storage'),
+    [Parameter(Mandatory=$false)][switch]$CheckExpireOn,
+    [Parameter(Mandatory=$false)][switch]$keepAlive
   )
 
   begin {
-    #connect to AZ account
-    try
-    {
-      $Connection = if ($subscritionID) {
-        Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+    if(-not $Connection) {
+      #connect to AZ account
+      try
+      {
+        if(-not $AccessToken){ 
+          $Connection = if ($subscritionID) {
+            Connect-AzAccount -TenantId $TenantID -Subscription $subscritionID
+          }
+          else  {
+            Connect-AzAccount -TenantId $TenantID
+          }
+        }
+        else {
+          $Connection = Connect-AzAccount -AccessToken $AccessToken -AccountId $AccountID -TenantId $TenantID
+        }
       }
-      else  {
-        Connect-AzAccount -TenantId $TenantID
+      catch 
+      {
+        if (!$Connection)
+        {
+          $ErrorMessage = '... Connection not found.'
+          throw $ErrorMessage
+        }
+        else
+        {
+          Write-PSFMessage -Level Error -Message $_.Exception -ModuleName 'AzResourceGraph'
+          throw $_.Exception
+        }
       }
     }
-    catch 
-    {
-      if (!$Connection)
-      {
-        $ErrorMessage = '... Connection not found.'
-        throw $ErrorMessage
+    else {
+      if(SignIn $connection) {
+        Write-PSFMessage -Level Verbose -Message $Connection.Context -ModuleName 'AzResourceGraph'
       }
-      else
-      {
-        Write-PSFMessage -Level Error -Message $_.Exception -ModuleName 'AzResourceGraph'
-        throw $_.Exception
+      else {
+        Write-PSFMessage -Level Error -Message '... Connection not found.' -ModuleName 'AzResourceGraph'
+        throw '... Connection not found.'
       }
     }
-    Write-PSFMessage -Level Verbose -Message $Connection.Context -ModuleName 'AzResourceGraph'
     
-        #check if expireOn tag should be used
+    #check if expireOn tag should be used
     $resourceGraphQuery = if ($CheckExpireOn) {
       'Resources | where todatetime(tags.expireOn) < now()'
     } else {
@@ -140,8 +169,10 @@ Function Get-AzureAllResource
 
     }
   }
-  end {
+end {
     $result
-    $null = Disconnect-AzAccount
-  }
+    if(-not $keepAlive) {
+          $null = Disconnect-AzAccount
+    }
+}
 }
