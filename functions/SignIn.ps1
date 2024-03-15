@@ -15,8 +15,5 @@ Function SignIn {
     else {
         Write-PSFMessage -Level Verbose -Message 'Not signed in to Azure.'
         $false
-    }
-
-    
-
+    }  
 }
